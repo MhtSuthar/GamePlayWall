@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "485011091022",
+    "project_id": "gameplaywall-b00a4",
+    "storage_bucket": "gameplaywall-b00a4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:485011091022:android:dc726f5e112ce2524c5d1f",
+        "android_client_info": {
+          "package_name": "com.gameplay"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "485011091022-i5jmk4dvo144ki87uklf2revrk53dldo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUs4LfAsLn3G74WmCdnBvMLkaDRdpk3xE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "485011091022-i5jmk4dvo144ki87uklf2revrk53dldo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
