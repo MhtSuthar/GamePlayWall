@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,8 +25,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.gameplay.model.Wall
+import com.gameplay.ui.detail.WallDetails
 import com.gameplay.ui.theme.GamePlayWallTheme
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -33,10 +39,7 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.database.ktx.getValue
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.remoteconfig.ConfigUpdate
-import com.google.firebase.remoteconfig.ConfigUpdateListener
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.google.firebase.remoteconfig.FirebaseRemoteConfigException
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -104,14 +107,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
+            val navController = rememberNavController()
             GamePlayWallTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    ShowStaggeredGrid(listOfWall)
+                NavHost(navController = navController, startDestination = "home") {
+                    composable("home") {
+                        ShowHomeScreen(listOfWall, navController)
+                    }
+                    composable("addTask") {
+                        WallDetails()
+                    }
                 }
+
             }
         }
     }
@@ -151,7 +157,24 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ShowStaggeredGrid(listOfWall: MutableStateFlow<MutableList<Wall>>) {
+fun ShowHomeScreen(
+    listOfWall: MutableStateFlow<MutableList<Wall>>,
+    navController: NavHostController
+) {
+    // A surface container using the 'background' color from the theme
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        ShowStaggeredGrid(listOfWall, navController)
+    }
+}
+
+@Composable
+fun ShowStaggeredGrid(
+    listOfWall: MutableStateFlow<MutableList<Wall>>,
+    navController: NavHostController
+) {
     //val viewModel = viewModel<CalculatorViewModel>()
     val list = listOfWall.collectAsState()
     println("List of Data ${list.value.size}")
@@ -165,7 +188,9 @@ fun ShowStaggeredGrid(listOfWall: MutableStateFlow<MutableList<Wall>>) {
                     .fillMaxWidth()
                     .height(if (i % 2 == 0) 160.dp else 200.dp)
                     .background(Color.Cyan)
-                    .neumorphic(),
+                    .neumorphic().clickable {
+                        navController.navigate("addTask")
+                    },
             ) {
                 AsyncImage(
                     modifier = Modifier

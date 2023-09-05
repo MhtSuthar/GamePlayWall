@@ -21,7 +21,7 @@
       "type": "Action,Adventure"
     },
     {
-      "id": 1,
+      "id": 2,
       "name": "Uncharted 4",
       "image_url": "https://i.postimg.cc/zXrYCXMy/Uncharted-Legacy-of-Thieves-Collection-8-24-2023-10-40-08-PM.png",
       "timestamp": "2323434234",
@@ -31,12 +31,12 @@
       "type": "Action,Adventure"
     },
     {
-      "id": 1,
-      "name": "Uncharted 4",
-      "image_url": "https://i.postimg.cc/FF23Gwgd/Uncharted-Legacy-of-Thieves-Collection-8-24-2023-10-40-52-PM.png",
+      "id": 3,
+      "name": "Assassins Creed: Mirage",
+      "image_url": "https://i.postimg.cc/rwWc6nHP/mirage-I8wz-LTO.webp",
       "timestamp": "2323434234",
       "download_count": 0,
-      "thumb_url": "https://i.postimg.cc/c6BvL9z0/Uncharted-Legacy-of-Thieves-Collection-8-24-2023-10-40-52-PM.png",
+      "thumb_url": "https://i.postimg.cc/TKRBg9fV/mirage-I8wz-LTO.webp",
       "is_delete": false,
       "type": "Action,Adventure"
     }
