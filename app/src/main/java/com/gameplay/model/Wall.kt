@@ -1,5 +1,9 @@
 package com.gameplay.model
 
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
+
+@Parcelize
 data class Wall(
     val id: Int? = -1,
     val name: String? = null,
@@ -9,4 +13,4 @@ data class Wall(
     val download_count: Int? = null,
     val is_delete: Boolean? = false,
     val type: String? = null,
-)
+): Parcelable

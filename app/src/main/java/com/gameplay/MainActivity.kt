@@ -1,5 +1,6 @@
 package com.gameplay
 
+import android.content.pm.PackageInfo
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -20,6 +21,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -32,7 +35,9 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.gameplay.model.Wall
 import com.gameplay.ui.detail.WallDetails
+import com.gameplay.ui.home.UpdateAvailDialog
 import com.gameplay.ui.theme.GamePlayWallTheme
+import com.gameplay.utils.navigated
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
@@ -44,6 +49,7 @@ import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.nikhilchaudhari.library.neumorphic
+
 
 class MainActivity : ComponentActivity() {
 
@@ -88,11 +94,13 @@ class MainActivity : ComponentActivity() {
                     val updated = task.result
                     Log.d(TAG, "Config params updated: $updated")
                     val isUpdateAvail = firebaseRemoteConfig.getBoolean("isUpdateAvail")
-                    Toast.makeText(
-                        this,
-                        "Fetch and activate succeeded $isUpdateAvail",
-                        Toast.LENGTH_SHORT,
-                    ).show()
+                    val isForceUpdate = firebaseRemoteConfig.getBoolean("isForceUpdate")
+                    val appVersion = firebaseRemoteConfig.getString("appVersion")
+                    val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
+                    Log.i(TAG, "Fetch Config update avail $isUpdateAvail App version $appVersion")
+                    if (appVersion.toDouble() > pInfo.versionName.toDouble() && isUpdateAvail) {
+                        showUpdateDialog()
+                    }
                 } else {
                     Toast.makeText(
                         this,
@@ -101,6 +109,20 @@ class MainActivity : ComponentActivity() {
                     ).show()
                 }
             }
+    }
+
+    private fun showUpdateDialog(){
+
+    }
+
+    @Composable
+    private fun ShowComposeUpdateDialog() {
+        val showDialog =  remember { mutableStateOf(true) }
+        if(showDialog.value){
+            UpdateAvailDialog(setShowDialog = {
+                showDialog.value = it
+            })
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,11 +135,14 @@ class MainActivity : ComponentActivity() {
                     composable("home") {
                         ShowHomeScreen(listOfWall, navController)
                     }
-                    composable("addTask") {
-                        WallDetails()
+                    composable(
+                        "wallDetails",
+                        //arguments = listOf(navArgument("wallUrl") { type = NavType.StringType })
+                    ) {
+                        val wall = it.arguments?.getParcelable<Wall>("wall")
+                        WallDetails(wall)
                     }
                 }
-
             }
         }
     }
@@ -188,8 +213,12 @@ fun ShowStaggeredGrid(
                     .fillMaxWidth()
                     .height(if (i % 2 == 0) 160.dp else 200.dp)
                     .background(Color.Cyan)
-                    .neumorphic().clickable {
-                        navController.navigate("addTask")
+                    .neumorphic()
+                    .clickable {
+                        val bundle = Bundle();
+                        bundle.putParcelable("wall", wall)
+                        navController.navigated("wallDetails", bundle)
+                        //navController.navigate("wallDetails/${wall.image_url.toString()}")
                     },
             ) {
                 AsyncImage(
