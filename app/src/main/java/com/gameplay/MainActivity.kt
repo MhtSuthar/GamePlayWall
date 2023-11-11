@@ -1,6 +1,10 @@
 package com.gameplay
 
+import android.app.AlertDialog
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.content.pm.PackageInfo
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -99,7 +103,7 @@ class MainActivity : ComponentActivity() {
                     val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
                     Log.i(TAG, "Fetch Config update avail $isUpdateAvail App version $appVersion")
                     if (appVersion.toDouble() > pInfo.versionName.toDouble() && isUpdateAvail) {
-                        showUpdateDialog()
+                        showUpdateDialog(isForceUpdate)
                     }
                 } else {
                     Toast.makeText(
@@ -111,14 +115,43 @@ class MainActivity : ComponentActivity() {
             }
     }
 
-    private fun showUpdateDialog(){
+    private fun showUpdateDialog(isForceUpdate: Boolean) {
+        val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+        builder
+            .setMessage(getString(R.string.update_avail))
+            .setTitle(getString(R.string.download_app))
+            .setPositiveButton(getString(R.string.download)) { dialog, _ ->
+                dialog.cancel()
+                openPlayStore()
+            }
+        if (!isForceUpdate) {
+            builder.setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
+                dialog.cancel()
+            }
+        }
 
+        val dialog: AlertDialog = builder.create()
+        dialog.setCancelable(!isForceUpdate)
+        dialog.show()
+    }
+
+    private fun openPlayStore() {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName")))
+        } catch (e: ActivityNotFoundException) {
+            startActivity(
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://play.google.com/store/apps/details?id=$packageName")
+                )
+            )
+        }
     }
 
     @Composable
     private fun ShowComposeUpdateDialog() {
-        val showDialog =  remember { mutableStateOf(true) }
-        if(showDialog.value){
+        val showDialog = remember { mutableStateOf(true) }
+        if (showDialog.value) {
             UpdateAvailDialog(setShowDialog = {
                 showDialog.value = it
             })
@@ -212,8 +245,11 @@ fun ShowStaggeredGrid(
                     .padding(2.dp)
                     .fillMaxWidth()
                     .height(if (i % 2 == 0) 160.dp else 200.dp)
-                    .background(Color.Cyan)
-                    .neumorphic()
+                    .background(Color.Black)
+                    .neumorphic(
+                        lightShadowColor = MaterialTheme.colorScheme.background,
+                        darkShadowColor = Color.LightGray
+                    )
                     .clickable {
                         val bundle = Bundle();
                         bundle.putParcelable("wall", wall)

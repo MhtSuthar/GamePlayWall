@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">GamePlayWall</string>
+    <string name="download">Download</string>
+    <string name="download_app">Download App</string>
+    <string name="update_avail">New App Update available, press download button.</string>
+    <string name="cancel">Cancel</string>
 </resources>
