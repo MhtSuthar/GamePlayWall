@@ -1,15 +1,16 @@
 {
   "project_info": {
     "project_number": "485011091022",
+    "firebase_url": "https://gameplaywall-b00a4-default-rtdb.firebaseio.com",
     "project_id": "gameplaywall-b00a4",
     "storage_bucket": "gameplaywall-b00a4.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:485011091022:android:dc726f5e112ce2524c5d1f",
+        "mobilesdk_app_id": "1:485011091022:android:d253e5743804cfb84c5d1f",
         "android_client_info": {
-          "package_name": "com.gameplay"
+          "package_name": "com.gameplay.mht"
         }
       },
       "oauth_client": [

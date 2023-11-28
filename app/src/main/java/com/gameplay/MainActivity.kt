@@ -10,38 +10,20 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage
 import com.gameplay.model.Wall
 import com.gameplay.ui.detail.WallDetails
+import com.gameplay.ui.home.HomeScreen
 import com.gameplay.ui.home.UpdateAvailDialog
 import com.gameplay.ui.theme.GamePlayWallTheme
-import com.gameplay.utils.navigated
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
@@ -52,7 +34,6 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 import kotlinx.coroutines.flow.MutableStateFlow
-import me.nikhilchaudhari.library.neumorphic
 
 
 class MainActivity : ComponentActivity() {
@@ -60,6 +41,9 @@ class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
     var listOfWall = MutableStateFlow<MutableList<Wall>>(mutableListOf())
     private val firebaseRemoteConfig: FirebaseRemoteConfig = Firebase.remoteConfig
+    // [START declare_auth]
+    private lateinit var auth: FirebaseAuth
+    // [END declare_auth]
 
     override fun onStart() {
         super.onStart()
@@ -160,24 +144,46 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        auth = Firebase.auth
         setContent {
             val navController = rememberNavController()
             GamePlayWallTheme {
                 NavHost(navController = navController, startDestination = "home") {
                     composable("home") {
-                        ShowHomeScreen(listOfWall, navController)
+                        HomeScreen(listOfWall, navController)
                     }
                     composable(
                         "wallDetails",
                         //arguments = listOf(navArgument("wallUrl") { type = NavType.StringType })
                     ) {
                         val wall = it.arguments?.getParcelable<Wall>("wall")
-                        WallDetails(wall)
+                        WallDetails(wall, navController)
                     }
                 }
             }
         }
+    }
+
+    private fun signInAnonymously() {
+        // [START signin_anonymously]
+        auth.signInAnonymously()
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    // Sign in success, update UI with the signed-in user's information
+                    Log.d(TAG, "signInAnonymously:success")
+                    val user = auth.currentUser
+                    Log.d(TAG, "signInAnonymously:success ${user.toString()}")
+                } else {
+                    // If sign in fails, display a message to the user.
+                    Log.w(TAG, "signInAnonymously:failure", task.exception)
+                    Toast.makeText(
+                        baseContext,
+                        "Authentication failed.",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            }
+        // [END signin_anonymously]
     }
 
     private fun initFirebaseDatabase() {
@@ -211,63 +217,6 @@ class MainActivity : ComponentActivity() {
             }
         })
 
-    }
-}
-
-@Composable
-fun ShowHomeScreen(
-    listOfWall: MutableStateFlow<MutableList<Wall>>,
-    navController: NavHostController
-) {
-    // A surface container using the 'background' color from the theme
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        ShowStaggeredGrid(listOfWall, navController)
-    }
-}
-
-@Composable
-fun ShowStaggeredGrid(
-    listOfWall: MutableStateFlow<MutableList<Wall>>,
-    navController: NavHostController
-) {
-    //val viewModel = viewModel<CalculatorViewModel>()
-    val list = listOfWall.collectAsState()
-    println("List of Data ${list.value.size}")
-    LazyVerticalStaggeredGrid(
-        columns = StaggeredGridCells.Fixed(2),
-    ) {
-        itemsIndexed(items = list.value) { i, wall ->
-            Box(
-                Modifier
-                    .padding(2.dp)
-                    .fillMaxWidth()
-                    .height(if (i % 2 == 0) 160.dp else 200.dp)
-                    .background(Color.Black)
-                    .neumorphic(
-                        lightShadowColor = MaterialTheme.colorScheme.background,
-                        darkShadowColor = Color.LightGray
-                    )
-                    .clickable {
-                        val bundle = Bundle();
-                        bundle.putParcelable("wall", wall)
-                        navController.navigated("wallDetails", bundle)
-                        //navController.navigate("wallDetails/${wall.image_url.toString()}")
-                    },
-            ) {
-                AsyncImage(
-                    modifier = Modifier
-                        .padding(2.dp)
-                        .fillMaxWidth()
-                        .fillMaxHeight(),
-                    contentScale = ContentScale.FillHeight,
-                    model = wall.thumb_url,
-                    contentDescription = "Translated description of what the image contains"
-                )
-            }
-        }
     }
 }
 
