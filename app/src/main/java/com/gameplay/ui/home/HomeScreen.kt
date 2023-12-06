@@ -38,11 +38,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.gameplay.R
 import com.gameplay.model.Wall
 import com.gameplay.utils.navigated
@@ -159,7 +161,10 @@ fun ShowStaggeredGrid(
                         .fillMaxWidth()
                         .fillMaxHeight(),
                     contentScale = ContentScale.FillHeight,
-                    model = wall.thumb_url,
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(wall.thumb_url)
+                        .crossfade(true)
+                        .build(),
                     contentDescription = "Translated description of what the image contains"
                 )
             }
