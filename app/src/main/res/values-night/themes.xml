@@ -4,11 +4,9 @@
     <style name="Theme.GamePlayWall" parent="android:Theme.Material.Light.NoActionBar" />
 
     <style name="Theme.MySplash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/white</item>
+        <item name="windowSplashScreenBackground">@color/black</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_inset</item>
-        <item name="windowSplashScreenIconBackgroundColor">@color/white</item>
         <item name="postSplashScreenTheme">@style/Theme.GamePlayWall</item>
         <item name="windowSplashScreenAnimationDuration">300</item>
-        <!--<item name="android:windowSplashScreenBrandingImage">@drawable/...</item>-->
     </style>
 </resources>

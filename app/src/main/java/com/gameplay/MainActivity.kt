@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -144,7 +145,19 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        auth = Firebase.auth
+        installSplashScreen()/*.apply {
+            setOnAnimationListener { viewProvider ->
+                viewProvider.iconView
+                    .animate()
+                    .setDuration(500L)
+                    .alpha(0f)
+                    .withEndAnimation {
+                        viewProvider.remove()
+                        someActionCall()
+                    }
+                    .start()
+            }*/
+            auth = Firebase.auth
         setContent {
             val navController = rememberNavController()
             GamePlayWallTheme {
