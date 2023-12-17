@@ -11,16 +11,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -28,11 +31,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -40,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -49,6 +52,7 @@ import com.gameplay.R
 import com.gameplay.model.Wall
 import com.gameplay.utils.navigated
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.util.Locale
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +62,7 @@ fun HomeScreen(
     navController: NavHostController
 ) {
     // A surface container using the 'background' color from the theme
+    val textState = remember { mutableStateOf(TextFieldValue("")) }
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -65,10 +70,10 @@ fun HomeScreen(
         Scaffold(
             topBar = {
                 //TopAppBar(title = { /*TODO*/ })
-                RoundedCornerSearch()
+                RoundedCornerSearch(textState)
             },
             content = {
-                ShowStaggeredGrid(listOfWall, navController, it)
+                ShowStaggeredGrid(listOfWall, navController, it, textState)
             }
         )
     }
@@ -76,8 +81,8 @@ fun HomeScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RoundedCornerSearch() {
-    var text by rememberSaveable { mutableStateOf("") }
+fun RoundedCornerSearch(textState: MutableState<TextFieldValue>) {
+    //var text by rememberSaveable { mutableStateOf("") }
     Card(
         modifier = Modifier
             .padding(16.dp)
@@ -99,9 +104,9 @@ fun RoundedCornerSearch() {
         // Your content inside the card
         TextField(
             modifier = Modifier.fillMaxWidth(),
-            value = text,
+            value = textState.value,
             onValueChange = {
-                text = it
+                textState.value = it
             },
             colors = TextFieldDefaults.textFieldColors(
                 placeholderColor = Color.Gray,
@@ -118,6 +123,21 @@ fun RoundedCornerSearch() {
                     tint = MaterialTheme.colorScheme.secondary
                 )
             },
+            trailingIcon = {
+                if (textState.value != TextFieldValue("")) {
+                    IconButton(
+                        onClick = {
+                            textState.value =
+                                TextFieldValue("") // Remove text from TextField when you press the 'X' icon
+                        }
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "",
+                        )
+                    }
+                }
+            },
             singleLine = true
         )
     }
@@ -127,16 +147,32 @@ fun RoundedCornerSearch() {
 fun ShowStaggeredGrid(
     listOfWall: MutableStateFlow<MutableList<Wall>>,
     navController: NavHostController,
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    textState: MutableState<TextFieldValue>
 ) {
     //val viewModel = viewModel<CalculatorViewModel>()
     val list = listOfWall.collectAsState()
-    println("List of Data ${list.value.size}")
+
+    val searchedText = textState.value.text
+    val filteredItems = if (searchedText.isEmpty()) {
+        list.value.reversed()
+    } else {
+        val resultList = mutableListOf<Wall>()
+        for (item in list.value) {
+            if (item.name?.lowercase(Locale.getDefault())
+                    ?.contains(searchedText.lowercase(Locale.getDefault())) == true
+            ) {
+                resultList.add(item)
+            }
+        }
+        resultList
+    }
+
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(2),
         contentPadding = paddingValues
     ) {
-        itemsIndexed(items = list.value) { i, wall ->
+        itemsIndexed(items = filteredItems) { i, wall ->
             Box(
                 Modifier
                     .padding(8.dp)
@@ -160,10 +196,11 @@ fun ShowStaggeredGrid(
                         .padding(2.dp)
                         .fillMaxWidth()
                         .fillMaxHeight(),
-                    contentScale = ContentScale.FillHeight,
+                    contentScale = ContentScale.Crop,
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(wall.thumb_url)
                         .crossfade(true)
+                        .placeholder(R.drawable.logo)
                         .build(),
                     contentDescription = "Translated description of what the image contains"
                 )
@@ -176,6 +213,6 @@ fun ShowStaggeredGrid(
 @Composable
 fun GreetingPreview() {
     Column {
-        RoundedCornerSearch()
+        //RoundedCornerSearch()
     }
 }

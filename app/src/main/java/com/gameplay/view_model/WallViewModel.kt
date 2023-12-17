@@ -59,9 +59,9 @@ class WallViewModel : ViewModel() {
             if (!path.exists())
                 path.mkdirs()
 
-
             val imageFile = File(path, "${url.substring(url.lastIndexOf('/') + 1)}.jpg")
             if (imageFile.exists()) {
+                Log.e("TAG", "Download Image Present")
                 //File Name Already Exist Do Whatever
             } else {
                 persistImage(context, imageFile, bitmap)

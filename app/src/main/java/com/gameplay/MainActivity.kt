@@ -42,6 +42,7 @@ class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
     var listOfWall = MutableStateFlow<MutableList<Wall>>(mutableListOf())
     private val firebaseRemoteConfig: FirebaseRemoteConfig = Firebase.remoteConfig
+
     // [START declare_auth]
     private lateinit var auth: FirebaseAuth
     // [END declare_auth]
@@ -157,7 +158,7 @@ class MainActivity : ComponentActivity() {
                     }
                     .start()
             }*/
-            auth = Firebase.auth
+        auth = Firebase.auth
         setContent {
             val navController = rememberNavController()
             GamePlayWallTheme {
