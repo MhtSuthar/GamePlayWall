@@ -6,6 +6,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.media.MediaScannerConnection
 import android.os.Environment
 import android.util.Log
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,6 +15,7 @@ import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import com.gameplay.model.Wall
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -21,11 +23,8 @@ import java.io.FileOutputStream
 import java.io.OutputStream
 
 class WallViewModel : ViewModel() {
-    var v1 by mutableStateOf("0")
-    var v2 by mutableStateOf("0")
-    /*val result = snapshotFlow { v1 to v2 }.mapLatest {
-        sum(it.first, it.second)
-    }.stateIn(viewModelScope, SharingStarted.Lazily, "0")*/
+    private var _downloadImageCallback = mutableStateOf("")
+    val downloadImageCallback: State<String> = _downloadImageCallback
 
     private fun persistImage(context: Context, file: File, bitmap: Bitmap) {
         val os: OutputStream
@@ -38,16 +37,19 @@ class WallViewModel : ViewModel() {
                 context, arrayOf(file.toString()),
                 null, null
             )
+            _downloadImageCallback.value = file.path
         } catch (e: Exception) {
             Log.e(javaClass.simpleName, "Error writing bitmap", e)
+            _downloadImageCallback.value = "-1"
         }
     }
 
-     fun downloadImageFromUrl(context: Context, url: String) {
+     fun downloadImageFromUrl(context: Context, wall: Wall?) {
         viewModelScope.launch(Dispatchers.IO) {
+            Log.e("TAG", "Download Started")
             val loader = ImageLoader(context)
             val request = ImageRequest.Builder(context)
-                .data(url)
+                .data(wall?.image_url)
                 .allowHardware(false) // Disable hardware bitmaps.
                 .build()
 
@@ -59,13 +61,19 @@ class WallViewModel : ViewModel() {
             if (!path.exists())
                 path.mkdirs()
 
-            val imageFile = File(path, "${url.substring(url.lastIndexOf('/') + 1)}.jpg")
+            val imageFile = File(path, "${wall?.image_url?.substring(wall?.image_url.lastIndexOf('/') + 1)}.jpg")
+            Log.e("TAG", "imageFile Path: $imageFile")
             if (imageFile.exists()) {
                 Log.e("TAG", "Download Image Present")
                 //File Name Already Exist Do Whatever
+                _downloadImageCallback.value = imageFile.path
             } else {
                 persistImage(context, imageFile, bitmap)
             }
         }
+    }
+
+    fun clearFilePath() {
+        _downloadImageCallback.value = ""
     }
 }

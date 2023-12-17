@@ -71,6 +71,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    //implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+
     implementation("androidx.compose.foundation:foundation:1.5.4")
     implementation("androidx.navigation:navigation-compose:2.7.5")
     implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
