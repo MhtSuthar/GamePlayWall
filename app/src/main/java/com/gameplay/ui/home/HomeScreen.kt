@@ -3,6 +3,7 @@ package com.gameplay.ui.home
 import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,10 +37,13 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -152,6 +157,26 @@ fun ShowStaggeredGrid(
 ) {
     //val viewModel = viewModel<CalculatorViewModel>()
     val list = listOfWall.collectAsState()
+
+    if (list.value.isEmpty()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularProgressIndicator(
+                /* modifier = Modifier.drawBehind {
+                     drawCircle(
+                         Color.Black,
+                         //radius = size.width / 2 - strokeWidth.toPx() / 2,
+                         //style = Stroke(5.dp))
+                     )
+                 },*/
+                color = Color.LightGray,
+                strokeWidth = 5.dp
+            )
+        }
+    }
 
     val searchedText = textState.value.text
     val filteredItems = if (searchedText.isEmpty()) {
