@@ -1,6 +1,5 @@
 Next Work:
-1. Splash
-2. Download Image
-3. Upload App
-4. Admob
-5. Add more gameplay wall
+1. Upload App
+2. Admob
+3. Add more gameplay wall
+4. Add is Delete flag when load the image
