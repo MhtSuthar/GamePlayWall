@@ -34,13 +34,14 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 
 class MainActivity : ComponentActivity() {
 
     private val TAG = "MainActivity"
-    var listOfWall = MutableStateFlow<MutableList<Wall>>(mutableListOf())
+    var listOfWall = MutableSharedFlow<MutableList<Wall>>(replay = 10)
     private val firebaseRemoteConfig: FirebaseRemoteConfig = Firebase.remoteConfig
 
     // [START declare_auth]
@@ -164,7 +165,9 @@ class MainActivity : ComponentActivity() {
             GamePlayWallTheme {
                 NavHost(navController = navController, startDestination = "home") {
                     composable("home") {
-                        HomeScreen(listOfWall, navController)
+                        HomeScreen(listOfWall.asSharedFlow(), navController) {
+                            loadMoreWall(it)
+                        }
                     }
                     composable(
                         "wallDetails",
@@ -176,6 +179,38 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun loadMoreWall(wallList: MutableList<Wall>) {
+        Log.e(TAG, "loadMoreWall: Before Name ${wallList.size}")
+        val database = Firebase.database
+        val myRef = database.reference
+        myRef.child("walls").orderByKey().startAfter(key).limitToFirst(10).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val _listOfWall = mutableListOf<Wall>()
+                dataSnapshot.children.forEach {
+                    val value = it.getValue<Wall>()
+                    value?.let { wall -> _listOfWall.add(wall) }
+                    key = it.key
+                    Log.e(TAG, "Load More Value is: ${value?.name}")
+                }
+                wallList.addAll(_listOfWall)
+                //listOfWall.value.addAll(_listOfWall)
+                //_listOfWall = listOfWall.value
+                //wallList.addAll(_listOfWall)
+                listOfWall.tryEmit(_listOfWall)
+                //listOfWall.value = listOfWall.value
+                /*listOfWall.update {
+                    //it.addAll(_listOfWall)
+                    it
+                }*/
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Failed to read value
+                Log.w(TAG, "Failed to read value.", error.toException())
+            }
+        })
     }
 
     private fun signInAnonymously() {
@@ -200,6 +235,7 @@ class MainActivity : ComponentActivity() {
         // [END signin_anonymously]
     }
 
+    var key: String? = null
     private fun initFirebaseDatabase() {
         Log.d(TAG, "Firebase Called")
         val database = Firebase.database
@@ -211,18 +247,26 @@ class MainActivity : ComponentActivity() {
 //            Log.d(TAG, "Failed ${it.message}")
 //        }
 
-        myRef.child("walls").addValueEventListener(object : ValueEventListener {
+        /*myRef.child("walls").limitToFirst(20).get().addOnSuccessListener {documentSnapshots->
+            val lastVisible = documentSnapshots.
+        }*/
+
+
+
+        myRef.child("walls").limitToFirst(20).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 // This method is called once with the initial value and again
                 // whenever data at this location is updated.
                 //Need to convert in Data Classes
-                var _listOfWall = mutableListOf<Wall>()
+
+                val _listOfWall = mutableListOf<Wall>()
                 dataSnapshot.children.forEach {
                     val value = it.getValue<Wall>()
                     value?.let { wall -> _listOfWall.add(wall) }
+                    key = it.key
                     Log.d(TAG, "Value is: ${value?.name}")
                 }
-                listOfWall.value = _listOfWall
+                listOfWall.tryEmit(_listOfWall)
             }
 
             override fun onCancelled(error: DatabaseError) {

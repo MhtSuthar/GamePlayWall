@@ -2,6 +2,7 @@ package com.gameplay.ui.home
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,10 +13,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -33,17 +35,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -56,15 +59,17 @@ import coil.request.ImageRequest
 import com.gameplay.R
 import com.gameplay.model.Wall
 import com.gameplay.utils.navigated
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import java.util.Locale
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    listOfWall: MutableStateFlow<MutableList<Wall>>,
-    navController: NavHostController
+    listOfWall: SharedFlow<MutableList<Wall>>,
+    navController: NavHostController,
+    loadMoreWall: (wall: MutableList<Wall>) -> Unit
 ) {
     // A surface container using the 'background' color from the theme
     val textState = remember { mutableStateOf(TextFieldValue("")) }
@@ -78,7 +83,7 @@ fun HomeScreen(
                 RoundedCornerSearch(textState)
             },
             content = {
-                ShowStaggeredGrid(listOfWall, navController, it, textState)
+                ShowStaggeredGrid(listOfWall, navController, it, textState, loadMoreWall)
             }
         )
     }
@@ -150,15 +155,22 @@ fun RoundedCornerSearch(textState: MutableState<TextFieldValue>) {
 
 @Composable
 fun ShowStaggeredGrid(
-    listOfWall: MutableStateFlow<MutableList<Wall>>,
+    listOfWall: SharedFlow<MutableList<Wall>>,
     navController: NavHostController,
     paddingValues: PaddingValues,
-    textState: MutableState<TextFieldValue>
+    textState: MutableState<TextFieldValue>,
+    loadMoreWall: (wall: MutableList<Wall>) -> Unit
 ) {
     //val viewModel = viewModel<CalculatorViewModel>()
-    val list = listOfWall.collectAsState()
+    val listOfWallState = listOfWall.collectAsState(initial = mutableListOf())
+    Log.e("TAG", "ShowStaggeredGrid: ${listOfWallState.value.size}" )
 
-    if (list.value.isEmpty()) {
+    val list = remember {
+        mutableListOf<Wall>()
+    }
+    list.addAll(listOfWallState.value)
+
+    if (list.isEmpty()) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -180,10 +192,10 @@ fun ShowStaggeredGrid(
 
     val searchedText = textState.value.text
     val filteredItems = if (searchedText.isEmpty()) {
-        list.value.reversed()
+        list//.reversed()
     } else {
         val resultList = mutableListOf<Wall>()
-        for (item in list.value) {
+        for (item in list) {
             if (item.name?.lowercase(Locale.getDefault())
                     ?.contains(searchedText.lowercase(Locale.getDefault())) == true
             ) {
@@ -193,9 +205,11 @@ fun ShowStaggeredGrid(
         resultList
     }
 
+    val listState = rememberLazyStaggeredGridState()
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(2),
-        contentPadding = paddingValues
+        contentPadding = paddingValues,
+        state = listState
     ) {
         itemsIndexed(items = filteredItems) { i, wall ->
             Box(
@@ -229,8 +243,51 @@ fun ShowStaggeredGrid(
                         .build(),
                     contentDescription = "Translated description of what the image contains"
                 )
+                AsyncImage(
+                    modifier = Modifier
+                        .padding(2.dp)
+                        .fillMaxWidth()
+                        .fillMaxHeight(),
+                    contentScale = ContentScale.Crop,
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(wall.image_url)
+                        .crossfade(true)
+                        //.placeholder(R.drawable.logo)
+                        .build(),
+                    contentDescription = "Translated description of what the image contains"
+                )
             }
         }
+    }
+    listState.OnBottomReached {
+        Log.e("TAG", "Load More: ${list.size}")
+        if (list.isNotEmpty()) {
+            loadMoreWall(list)
+        }
+    }
+}
+
+@Composable
+fun LazyStaggeredGridState.OnBottomReached(
+    loadMore: (count: Int) -> Unit
+) {
+    val shouldLoadMore = remember {
+        derivedStateOf {
+            val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()
+                ?: return@derivedStateOf true
+
+            lastVisibleItem.index == layoutInfo.totalItemsCount - 1
+        }
+    }
+
+    // Convert the state into a cold flow and collect
+    LaunchedEffect(shouldLoadMore) {
+        snapshotFlow { shouldLoadMore.value }
+            .collect {
+                Log.e("TAG", "Item Count: ${layoutInfo.totalItemsCount}")
+                // if should load more, then invoke loadMore
+                if (it) loadMore(layoutInfo.totalItemsCount)
+            }
     }
 }
 

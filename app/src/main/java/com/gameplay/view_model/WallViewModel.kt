@@ -17,6 +17,8 @@ import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.gameplay.model.Wall
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -25,6 +27,10 @@ import java.io.OutputStream
 class WallViewModel : ViewModel() {
     private var _downloadImageCallback = mutableStateOf("")
     val downloadImageCallback: State<String> = _downloadImageCallback
+
+    var listOfWallMutableSharedFlow = MutableSharedFlow<MutableList<Wall>>(replay = 10)
+    var listOfWallSharedFlow = listOfWallMutableSharedFlow.asSharedFlow()
+    var listOfWall = mutableListOf<Wall>()
 
     private fun persistImage(context: Context, file: File, bitmap: Bitmap) {
         val os: OutputStream
